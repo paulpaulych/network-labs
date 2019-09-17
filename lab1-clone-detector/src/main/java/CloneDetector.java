@@ -1,52 +1,72 @@
+
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Objects;
+import java.net.MulticastSocket;
+import java.net.SocketTimeoutException;
+import java.util.HashMap;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class CloneDetector {
 
-    private static final int port = 5555;
-    private static final String address = "255.255.255.255";
+    private static final int bufSize = 64;
+    private static final int timeout = 2000;
+    private static final int port = 4424;
+    private static final String groupAddress = "230.0.0.0";
+    private static final String message = "i'm here!";
+    private final DatagramPacket packetToRecv;
+    private static final long addressTtl = 10000;
+    private HashMap<String, Long> addressAge = new HashMap<>();
+
+    public CloneDetector() {
+        packetToRecv = new DatagramPacket(new byte[bufSize], bufSize);
+    }
 
     public void run() throws IOException {
 
-        DatagramSocket socket = new DatagramSocket();
-        socket.setBroadcast(true);
+        MulticastSocket socket = new MulticastSocket(new InetSocketAddress("0::0", port));
 
-        byte[] buffer = "hello".getBytes();
-        InetSocketAddress socketAddress = new InetSocketAddress(address, port);
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, socketAddress);
-        socket.send(packet);
-        socket.close();
-    }
+        InetAddress group = InetAddress.getByName(groupAddress);
+        socket.joinGroup(group);
 
-    public void listAllBroadcastAddresses() throws SocketException {
-        List<InetAddress> broadcastAddresses = new ArrayList<>();
-        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-        while (interfaces.hasMoreElements()){
-            NetworkInterface networkInterface = interfaces.nextElement();
+        byte[] buffer = message.getBytes();
+        DatagramPacket packetToSend = new DatagramPacket(buffer, buffer.length, group, port);
+        socket.setSoTimeout(timeout);
+        while(true){
+            socket.send(packetToSend);
+            long lastTime = System.currentTimeMillis();
+            while(System.currentTimeMillis() - lastTime < timeout){
 
-            if(networkInterface.isLoopback() || !networkInterface.isUp()){
-                continue;
+                socket.setSoTimeout(timeout);
+                try{
+                    socket.receive(packetToRecv);
+                }catch (SocketTimeoutException e){
+                    continue;
+                }
+
+                if(!message.equals(new String(packetToRecv.getData(), 0, packetToRecv.getLength()))){
+                    log.info("not-from-clone message");
+                    continue;
+                }
+
+                String receivedAddress = packetToRecv.getAddress().getHostAddress();
+
+                addressAge.put(receivedAddress, System.currentTimeMillis());
             }
 
-            networkInterface.getInterfaceAddresses().stream()
-                    .map(InterfaceAddress::getBroadcast)
-                    .filter(Objects::nonNull)
-                    .forEach(broadcastAddresses::add);
+            addressAge.entrySet().removeIf(e -> System.currentTimeMillis() - e.getValue() > addressTtl);
 
-            broadcastAddresses.forEach(x -> System.out.println(x.toString()));
+            printAddresses();
         }
+    }
 
-
+    private void printAddresses() {
+        Integer i = 1;
+        System.out.println("====CLONES====");
+        for (String address: addressAge.keySet()) {
+            System.out.println(i.toString() + ". " + address);
+        }
     }
 }

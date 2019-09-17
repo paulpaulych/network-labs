@@ -11,9 +11,17 @@ repositories {
     mavenCentral()
 }
 
+
+
 dependencies {
     compileOnly "org.projectlombok:lombok:$lombokVersion"
     annotationProcessor "org.projectlombok:lombok:$lombokVersion"
     implementation "ch.qos.logback:logback-classic:$logbackClassicVersion"
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+jar {
+    manifest {
+        attributes 'Main-Class': 'Main'
+    }
+    from configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 }
