@@ -1,0 +1,3 @@
+rootProject.name = 'networks-and-telecom'
+include 'lab1-clone-detector'
+

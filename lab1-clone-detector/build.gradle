@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+group 'com.pyankoff.networks-and-telecom'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly "org.projectlombok:lombok:$lombokVersion"
+    annotationProcessor "org.projectlombok:lombok:$lombokVersion"
+    implementation "ch.qos.logback:logback-classic:$logbackClassicVersion"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}

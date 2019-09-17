@@ -1,0 +1,5 @@
+# Project exclude paths
+/.gradle/
+/build/
+/lab1-clone-detector/build/
+/lab1-clone-detector/build/classes/java/main/
