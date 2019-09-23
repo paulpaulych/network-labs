@@ -1,45 +1,47 @@
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
-import java.net.SocketTimeoutException;
+import java.net.*;
 import java.util.HashMap;
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CloneDetector {
 
     private static final int bufSize = 64;
-    private static final int timeout = 2000;
+    private static final int timeout = 1000;
     private static final int port = 4424;
-    private static final String groupAddress = "230.0.0.0";
-    private static final String message = "i'm here!";
-    private final DatagramPacket packetToRecv;
-    private static final long addressTtl = 10000;
-    private HashMap<String, Long> addressAge = new HashMap<>();
+    private static final String message = "";
+    private static final long addressTtl = 3000;
 
-    public CloneDetector() {
+
+    private final String groupAddress;
+    private final DatagramPacket packetToRecv;
+    private Map<String, Long> addressAge = new HashMap<>();
+
+    public CloneDetector(String groupAddress) {
+        this.groupAddress = groupAddress;
         packetToRecv = new DatagramPacket(new byte[bufSize], bufSize);
     }
 
     public void run() throws IOException {
 
-        MulticastSocket socket = new MulticastSocket(new InetSocketAddress("0::0", port));
+        MulticastSocket socket = new MulticastSocket(port);
+
+        System.out.println(socket.getLocalAddress());
 
         InetAddress group = InetAddress.getByName(groupAddress);
         socket.joinGroup(group);
 
         byte[] buffer = message.getBytes();
         DatagramPacket packetToSend = new DatagramPacket(buffer, buffer.length, group, port);
-        socket.setSoTimeout(timeout);
         while(true){
             socket.send(packetToSend);
             long lastTime = System.currentTimeMillis();
             while(System.currentTimeMillis() - lastTime < timeout){
 
-                socket.setSoTimeout(timeout);
+                socket.setSoTimeout((Long.valueOf(System.currentTimeMillis() - lastTime)).intValue()+1);
                 try{
                     socket.receive(packetToRecv);
                 }catch (SocketTimeoutException e){
@@ -47,26 +49,30 @@ public class CloneDetector {
                 }
 
                 if(!message.equals(new String(packetToRecv.getData(), 0, packetToRecv.getLength()))){
-                    log.info("not-from-clone message");
+                    log.warn("not-from-clone message");
                     continue;
                 }
-
                 String receivedAddress = packetToRecv.getAddress().getHostAddress();
-
-                addressAge.put(receivedAddress, System.currentTimeMillis());
+                Long existed = addressAge.put(receivedAddress, System.currentTimeMillis());
+                if(existed == null){
+                    System.out.println("====CLONE APPEARED====");
+                    printAddresses();
+                }
             }
 
-            addressAge.entrySet().removeIf(e -> System.currentTimeMillis() - e.getValue() > addressTtl);
-
-            printAddresses();
+            boolean wereRemoved = addressAge.entrySet().removeIf(e -> System.currentTimeMillis() - e.getValue() > addressTtl);
+            if(wereRemoved){
+                System.out.println("====CLONE DISAPPEARED====");
+                printAddresses();
+            }
         }
     }
 
     private void printAddresses() {
         Integer i = 1;
-        System.out.println("====CLONES====");
         for (String address: addressAge.keySet()) {
             System.out.println(i.toString() + ". " + address);
+            i++;
         }
     }
 }
