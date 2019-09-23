@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+}
+
+group 'com.pyankoff.networks-and-telecom'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("commons-cli:commons-cli:$commonsCliVersion")
+    compileOnly "org.projectlombok:lombok:$lombokVersion"
+    annotationProcessor "org.projectlombok:lombok:$lombokVersion"
+    implementation "ch.qos.logback:logback-classic:$logbackClassicVersion"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'Main'
+    }
+    from configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+}
