@@ -19,7 +19,7 @@ public class FileExchangeClient {
             OutputStream os = socket.getOutputStream();
             FileInputStream fis = new FileInputStream(file);
 
-
+            FileMetaData fileMetaData = new FileMetaData(file.getName(), file.length());
             while(fis.read(buffer, 0, BUFFER_SIZE) != -1){
                 os.write(buffer);
             }

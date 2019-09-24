@@ -1,6 +1,6 @@
 public class FileMetaData {
     private String name;
-    private int size;
+    private long size;
 
     public FileMetaData(String name, int size) {
         this.name = name;
@@ -15,11 +15,11 @@ public class FileMetaData {
         this.name = name;
     }
 
-    public int getSize() {
+    public long getSize() {
         return size;
     }
 
-    public void setSize(int size) {
+    public void setSize(long size) {
         this.size = size;
     }
 }

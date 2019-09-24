@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     testCompile group: 'com.pyankoff.networks-and-telecom', name: 'lab2-common', version: '1.0-SNAPSHOT'
+
     implementation("commons-cli:commons-cli:$commonsCliVersion")
 
     implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
