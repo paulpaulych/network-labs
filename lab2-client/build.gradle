@@ -12,10 +12,16 @@ repositories {
 }
 
 dependencies {
+    implementation("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
+    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+
     implementation("commons-cli:commons-cli:$commonsCliVersion")
+
     compileOnly "org.projectlombok:lombok:$lombokVersion"
     annotationProcessor "org.projectlombok:lombok:$lombokVersion"
+
     implementation "ch.qos.logback:logback-classic:$logbackClassicVersion"
+
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 

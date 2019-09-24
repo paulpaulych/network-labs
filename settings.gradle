@@ -2,4 +2,5 @@ rootProject.name = 'networks-and-telecom'
 include 'lab1-clone-detector'
 include 'lab2-server'
 include 'lab2-client'
+include 'lab2-common'
 

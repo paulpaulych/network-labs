@@ -1,16 +1,32 @@
-import lombok.RequiredArgsConstructor;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
-import java.io.File;
-import java.net.InetAddress;
-
-@RequiredArgsConstructor
 public class FileExchangeClient {
 
-    private final InetAddress targetAddress;
-    private final int port;
-    private final File file;
 
-    public void run(){
+    private static final int BUFFER_SIZE = 1024;
+    private final byte[] buffer = new byte[BUFFER_SIZE];
+
+
+    public void send(InetSocketAddress target, File file){
+
+        try(Socket socket = new Socket()) {
+
+            socket.connect(target);
+
+            InputStream is = socket.getInputStream();
+            OutputStream os = socket.getOutputStream();
+            FileInputStream fis = new FileInputStream(file);
+
+
+            while(fis.read(buffer, 0, BUFFER_SIZE) != -1){
+                os.write(buffer);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 }
