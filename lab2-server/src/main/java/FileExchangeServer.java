@@ -15,12 +15,13 @@ public class FileExchangeServer {
         ExecutorService handlers = Executors.newFixedThreadPool(MAX_CONNECTIONS_NUMBER);
         try(ServerSocket serverSocket = new ServerSocket(port)){
             while(true){
+                log.debug("waiting for connection..");
                 Socket socket = serverSocket.accept();
-                log.info("got connection from {}", socket.getInetAddress());
+                log.info("got connection from {}", socket.getRemoteSocketAddress());
                 handlers.submit(new ConnectionHandler(socket));
             }
         }catch (IOException e){
-            log.error(e.getMessage());
+            log.debug(e.getMessage());
         }
     }
 

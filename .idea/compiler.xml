@@ -4,5 +4,9 @@
     <annotationProcessing>
       <profile default="true" name="Default" enabled="true" />
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="networks-and-telecom.lab2-common.main" target="1.8" />
+      <module name="networks-and-telecom.lab2-common.test" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>

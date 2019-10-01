@@ -1,4 +1,5 @@
 
+import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.HashMap;
@@ -9,9 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CloneDetector {
 
-    private static final int bufSize = 64;
+    private static final int bufSize = 0;
     private static final int timeout = 1000;
-    private static final int port = 4424;
+    private static final int port = 12345;
     private static final String message = "";
     private static final long addressTtl = 3000;
 
@@ -39,19 +40,15 @@ public class CloneDetector {
         while(true){
             socket.send(packetToSend);
             long lastTime = System.currentTimeMillis();
-            while(System.currentTimeMillis() - lastTime < timeout){
+            while(timeout - (System.currentTimeMillis() - lastTime) > 0){
 
-                socket.setSoTimeout((Long.valueOf(System.currentTimeMillis() - lastTime)).intValue()+1);
+                socket.setSoTimeout((Long.valueOf(timeout - (System.currentTimeMillis() - lastTime))).intValue()+1);
                 try{
                     socket.receive(packetToRecv);
                 }catch (SocketTimeoutException e){
                     continue;
                 }
 
-                if(!message.equals(new String(packetToRecv.getData(), 0, packetToRecv.getLength()))){
-                    log.warn("not-from-clone message");
-                    continue;
-                }
                 String receivedAddress = packetToRecv.getAddress().getHostAddress();
                 Long existed = addressAge.put(receivedAddress, System.currentTimeMillis());
                 if(existed == null){
