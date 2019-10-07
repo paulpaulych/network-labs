@@ -17,7 +17,7 @@ public class ConnectionHandler extends Thread {
     private static final int FAILURE = -1;
     private static final int SUCCESS = 0;
 
-    private static final int BUFFER_SIZE = 1024;
+    private static final int BUFFER_SIZE = 1024*1024;
     private final byte[] buffer = new byte[BUFFER_SIZE];
 
     private final Socket socket;
@@ -45,6 +45,8 @@ public class ConnectionHandler extends Thread {
 
             String fileName = new String(fileNameBytes, StandardCharsets.UTF_8);
             log.debug("file name is {}", fileName);
+
+            log.debug("receiving file:  is {}({}KB)", fileLengthBytes, fileLength);
 
             File file = getFile(fileName);
             fos = new FileOutputStream(file);
@@ -98,7 +100,14 @@ public class ConnectionHandler extends Thread {
         return file.toFile();
     }
 
-
+    private static byte[] longToBytes(long l) {
+        byte[] result = new byte[8];
+        for (int i = 7; i >= 0; i--) {
+            result[i] = (byte)(l & 0xFF);
+            l >>= 8;
+        }
+        return result;
+    }
     private static long bytesToLong(byte[] b) {
         long result = 0;
         for (int i = 0; i < 8; i++) {
