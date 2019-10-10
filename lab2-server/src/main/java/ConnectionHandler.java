@@ -1,9 +1,9 @@
 
+import micrometer.Micrometer;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -21,9 +21,11 @@ public class ConnectionHandler extends Thread {
     private final byte[] buffer = new byte[BUFFER_SIZE];
 
     private final Socket socket;
+    private Micrometer micrometer;
 
-    public ConnectionHandler(Socket socket) {
+    public ConnectionHandler(Socket socket, Micrometer micrometer) {
         this.socket = socket;
+        this.micrometer = micrometer;
     }
 
     @Override
@@ -33,30 +35,32 @@ public class ConnectionHandler extends Thread {
             byte[] fileLengthBytes = new byte[8];
             is.read(fileLengthBytes);
             long fileLength = bytesToLong(fileLengthBytes);
-            log.debug("file size is {}({})", fileLengthBytes, fileLength);
+            log.debug("file size is {} B", fileLength);
 
             byte[] fileNameLengthBytes = new byte[8];
             is.read(fileNameLengthBytes);
             long fileNameLength = bytesToLong(fileNameLengthBytes);
-            log.debug("file name size is {}({})", fileNameLengthBytes, fileNameLength);
 
             byte[] fileNameBytes = new byte[(int)fileNameLength];
             is.read(fileNameBytes);
 
-            String fileName = new String(fileNameBytes, StandardCharsets.UTF_8);
-            log.debug("file name is {}", fileName);
+            String rawFileName = new String(fileNameBytes, StandardCharsets.UTF_8);
+            log.debug("raw file name is \"{}\"", rawFileName);
 
-            log.debug("receiving file:  is {}({}KB)", fileLengthBytes, fileLength);
+            log.debug("receiving file:  is {} B", fileLength);
 
-            File file = getFile(fileName);
+            File file = getFile(rawFileName);
             fos = new FileOutputStream(file);
+            String fileName = file.getName();
 
-            long totalBytesReceived = 0;
-            while(totalBytesReceived < fileLength){
+            micrometer.attach(fileName);
+            while(micrometer.getTotalBytesRead(fileName) < fileLength){
                 int bytesReceived = is.read(buffer);
-                totalBytesReceived += bytesReceived;
                 fos.write(buffer, 0, bytesReceived);
+                micrometer.publishBytesRead(fileName, bytesReceived);
             }
+            System.out.println("Total time for file \"" + fileName + "\" is " + micrometer.getTotalTime(fileName));
+            micrometer.detach(fileName);
             fos.close();
 
             if(file.length() == fileLength) {

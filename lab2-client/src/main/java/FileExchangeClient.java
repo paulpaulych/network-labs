@@ -34,18 +34,18 @@ public class FileExchangeClient {
 
             long fileSize = file.length();
 
-            long startTs = System.currentTimeMillis();
+//            long startTs = System.currentTimeMillis();
 
             long totalBytesRead = 0;
             while(totalBytesRead < fileSize){
-                long lastTs = System.currentTimeMillis();
+//                long lastTs = System.currentTimeMillis();
                 int bytesRead = fis.read(buffer);
                 totalBytesRead += bytesRead;
                 os.write(buffer, 0, bytesRead);
-                System.out.printf("Current speed: %.0f KB/sec\n",
-                        (double)bytesRead/(double)(System.currentTimeMillis() - lastTs)/1024*1000);
-                System.out.printf("Average speed: %.00f KB/sec\n",
-                        (double)totalBytesRead/(double)(System.currentTimeMillis() - startTs)/1024*1000);
+//                System.out.printf("Current speed: %.0f KB/sec\n",
+//                        (double)bytesRead/(double)(System.currentTimeMillis() - lastTs)/1024*1000);
+//                System.out.printf("Average speed: %.00f KB/sec\n",
+//                        (double)totalBytesRead/(double)(System.currentTimeMillis() - startTs)/1024*1000);
             }
 
             socket.getInputStream().read(longBuffer);
